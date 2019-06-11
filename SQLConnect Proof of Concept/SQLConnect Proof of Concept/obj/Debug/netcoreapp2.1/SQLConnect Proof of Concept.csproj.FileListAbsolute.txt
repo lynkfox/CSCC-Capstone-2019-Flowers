@@ -1,0 +1,11 @@
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\bin\Debug\netcoreapp2.1\SQLConnect Proof of Concept.deps.json
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\bin\Debug\netcoreapp2.1\SQLConnect Proof of Concept.runtimeconfig.json
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\bin\Debug\netcoreapp2.1\SQLConnect Proof of Concept.runtimeconfig.dev.json
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\bin\Debug\netcoreapp2.1\SQLConnect Proof of Concept.dll
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.csprojAssemblyReference.cache
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.csproj.CoreCompileInputs.cache
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.AssemblyInfoInputs.cache
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.AssemblyInfo.cs
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\bin\Debug\netcoreapp2.1\SQLConnect Proof of Concept.pdb
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.dll
+C:\Users\lynkf\source\repos\SQLConnect Proof of Concept\SQLConnect Proof of Concept\obj\Debug\netcoreapp2.1\SQLConnect Proof of Concept.pdb
