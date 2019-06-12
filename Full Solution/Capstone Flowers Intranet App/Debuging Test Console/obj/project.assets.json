@@ -1684,11 +1684,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\lynkf\\source\\repos\\Capstone\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\Debuging Test Console.csproj",
+      "projectUniqueName": "C:\\Users\\lynkf\\source\\repos\\Capstone\\CapstoneGit\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\Debuging Test Console.csproj",
       "projectName": "Debuging Test Console",
-      "projectPath": "C:\\Users\\lynkf\\source\\repos\\Capstone\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\Debuging Test Console.csproj",
+      "projectPath": "C:\\Users\\lynkf\\source\\repos\\Capstone\\CapstoneGit\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\Debuging Test Console.csproj",
       "packagesPath": "C:\\Users\\lynkf\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\lynkf\\source\\repos\\Capstone\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\obj\\",
+      "outputPath": "C:\\Users\\lynkf\\source\\repos\\Capstone\\CapstoneGit\\Full Solution\\Capstone Flowers Intranet App\\Debuging Test Console\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

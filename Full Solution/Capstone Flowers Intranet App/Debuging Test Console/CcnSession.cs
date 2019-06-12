@@ -10,7 +10,7 @@ namespace Debuging_Test_Console.Session
     {
         //public properties
         public bool isManager { get; }
-        public string username { get; set; }
+        public string username { get;  }
 
         //private properties
 
@@ -48,7 +48,7 @@ namespace Debuging_Test_Console.Session
 
 
 
-        /* This funciton can be used to determine if the current employee has permission to access
+        /* This function can be used to determine if the current employee has permission to access
          * whatever it is being asked of. 
          * 
          * Returns True if a manager, false if not.
@@ -120,18 +120,18 @@ namespace Debuging_Test_Console.Session
 
                 try
                 {
-                    string sql = "SELECT * FROM " + tableName + ";";
+                    string sql = "SELECT * FROM " + tableName;
 
                     //logging
                     Console.WriteLine("Connecting... ");
 
                     var cmd = new MySqlCommand(sql, cnn);
-
+                    cnn.Open();
                     //logging
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
 
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
+                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd)) 
                     {
                         data.Fill(tableData);
                     }
@@ -168,7 +168,7 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Connecting... ");
 
                     var cmd = new MySqlCommand(sql, cnn);
-
+                    cnn.Open();
                     //logging
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
@@ -210,7 +210,7 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Connecting... ");
 
                     var cmd = new MySqlCommand(sql, cnn);
-
+                    cnn.Open();
                     //logging
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
@@ -264,7 +264,7 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Connecting... ");
 
                     var cmd = new MySqlCommand(sql, cnn);
-
+                    cnn.Open();
                     //logging
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
@@ -306,7 +306,7 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Connecting... ");
 
                     var cmd = new MySqlCommand(sql, cnn);
-
+                    cnn.Open();
                     //logging
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
@@ -344,8 +344,11 @@ namespace Debuging_Test_Console.Session
                     cmd.Parameters.Add("?FIRST_NAME", MySqlDbType.Text).Value = firstName;
                     cmd.Parameters.Add("?LAST_NAME", MySqlDbType.Text).Value = lastName;
                     cmd.Parameters.Add("?EMAIL", MySqlDbType.Text).Value = email;
+
+            returns a boolean, of True if the command is successful (ie, returns more than 0 rows), or false
+            if the command is not successful (returns 0 rows)
          */
-        public void SendQry(MySqlCommand cmd)
+        public bool SendQry(MySqlCommand cmd)
         {
 
             using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
@@ -367,13 +370,20 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Sending Command: {0}", cmd);
 
                     //Sends the command, as defined by the string builder externally.
-                    cmd.ExecuteNonQuery();
+                    if (cmd.ExecuteNonQuery() >= 1)
+                    {
+                        return true;
+                    } else
+                    {
+                        return false;
+                    }
 
                 }
                 catch (Exception ex)
                 {
                     //mostly for debugging at this point.
                     Console.WriteLine("Error: {0}", ex.Message);
+                    return false;
                 }
                 finally
                 {
