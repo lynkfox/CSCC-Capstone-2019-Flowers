@@ -1,0 +1,36 @@
+C:\Users\nlsab\source\repos\login\login\bin\Debug\login.exe.config
+C:\Users\nlsab\source\repos\login\login\bin\Debug\login.exe
+C:\Users\nlsab\source\repos\login\login\bin\Debug\login.pdb
+C:\Users\nlsab\source\repos\login\login\bin\Debug\BouncyCastle.Crypto.dll
+C:\Users\nlsab\source\repos\login\login\bin\Debug\Google.Protobuf.dll
+C:\Users\nlsab\source\repos\login\login\bin\Debug\MySql.Data.dll
+C:\Users\nlsab\source\repos\login\login\bin\Debug\Google.Protobuf.xml
+C:\Users\nlsab\source\repos\login\login\bin\Debug\MySql.Data.xml
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.csprojAssemblyReference.cache
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.LoginForm.resources
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.Properties.Resources.resources
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.csproj.GenerateResource.cache
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.csproj.CoreCompileInputs.cache
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.csproj.CopyComplete
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.exe
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.pdb
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.RegisterForm.resources
+C:\Users\nlsab\source\repos\login\login\obj\Debug\login.MainForm.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\login.exe.config
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\login.exe
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\login.pdb
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\BouncyCastle.Crypto.dll
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\Google.Protobuf.dll
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\MySql.Data.dll
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\Google.Protobuf.xml
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\bin\Debug\MySql.Data.xml
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.csprojAssemblyReference.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.LoginForm.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.MainForm.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.Properties.Resources.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.RegisterForm.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.csproj.GenerateResource.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.csproj.CoreCompileInputs.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.csproj.CopyComplete
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.exe
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\login\login\obj\Debug\login.pdb

@@ -1,4 +1,18 @@
-﻿using System;
+﻿/* This class is designed to hold all the information needed to access a mySQL database in the background for a 
+ * session. This includes the permission level of the user (currently Employee or Managerm based on the table)
+ * it also holds the connection data, so that it is always the same.
+ * 
+ * each function that can retrieve or send data to the mySQL database deals with the connection internally
+ * it opens and closes it to make sure there are no extra open connections floating around
+ * 
+ * 
+ * Designed by: Anthony Goh (lynkfox on GitHub)
+ * For: Columbus State Community College, CSCI-2999 capstone, 2019.
+ */
+
+
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
@@ -6,35 +20,19 @@ using MySql.Data.MySqlClient;
 
 namespace Debuging_Test_Console.Session
 {
-    internal class CcnSession
+    static class CcnSession
     {
         //public properties
-        public bool isManager { get; }
-        public string username { get;  }
-
-        //private properties
+        static public bool IsManager { get; set; }
+        static private string Username { get; set;  }
 
 
-        //constructors
-
-        public CcnSession()
-        {
-            isManager = false;
-            username = null;
-
-        }
-
-        public CcnSession(string user)
-        {
-            username = user;
-            isManager = Permission();
-        }
-
+       
         /* This connection is currently hardcoded in.
          * 
-         * TO DO - move connection to an extenral file to be read in
+         * TO DO - move connection to an external file to be read in
          */
-        private MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
+        private static MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
         {
             Server = "cscc-capstone-flowers.czo7kmlutdp9.us-east-2.rds.amazonaws.com",
             Database = "capstoneFlowers",
@@ -44,6 +42,17 @@ namespace Debuging_Test_Console.Session
 
         };
 
+        /* Initializes the username and the permission level for the current login session.
+         * 
+         * this should be called immediately after login.
+         */
+
+        static public void Setup(string user)
+        {
+            Username = user;
+            IsManager = Permission();
+
+        }
 
 
 
@@ -59,10 +68,10 @@ namespace Debuging_Test_Console.Session
          * 
          * This may change in the future.
          */
-        private bool Permission()
+        static private bool Permission()
         {
 
-            string sql = "SELECT type FROM EMPLOYEE WHERE username = '" + username + "';";
+            string sql = "SELECT type FROM EMPLOYEE WHERE username = '" + Username + "';";
             MySqlDataReader rdr = null;
             int i = 0;
 
@@ -74,24 +83,27 @@ namespace Debuging_Test_Console.Session
 
                 while (rdr.Read())
                 {
-                    Console.WriteLine("Checking Data. Username: " + username + " | AcctType: " + rdr.GetString(i));
+                    Console.WriteLine("Checking Data. Username: " + Username + " | AcctType: " + rdr.GetString(i));
                     i++;
                     // this bit is just in case the command somehow draws back more than one username of the same name. 
-                    // the username col in this table is set to unique, so this should never happen.
+                    // the username col in this table is set to unique, so this shouldn't happen. 
+                    // unless - where the username is similar like: abcd and abcde - 
+                    // check into this!!!!
+                    if (rdr.GetString(0) == "Manager")
+                    {
+
+                        return true;
+
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
 
                 // put in an exception for if rdr.count >1?
 
-                if (rdr.GetString(0) == "Manager")
-                {
-                    
-                    return true;
-
-                }
-                else
-                {
-                    return false;
-                }
+                return false;
             }
 
 
@@ -110,7 +122,7 @@ namespace Debuging_Test_Console.Session
          * 
          * does where val does not currently work with BETWEEN
          */
-        public DataTable GetTable(string tableName)
+        static public DataTable GetTable(string tableName)
         {
             var tableData = new DataTable();
 
@@ -152,7 +164,7 @@ namespace Debuging_Test_Console.Session
             }
 
         }
-        public DataTable GetTable(string tableName, string orderBy)
+        static public DataTable GetTable(string tableName, string orderBy)
         {
             var tableData = new DataTable();
 
@@ -194,7 +206,7 @@ namespace Debuging_Test_Console.Session
             }
 
         }
-        public DataTable GetTable(string tableName, string orderBy, string whCol, string whVal)
+        static public DataTable GetTable(string tableName, string orderBy, string whCol, string whVal)
         {
             var tableData = new DataTable();
 
@@ -248,7 +260,7 @@ namespace Debuging_Test_Console.Session
          * 
          * does not currently work with BETWEEN query
          */
-        public DataTable GetColumn(string tableName, string colName)
+        static public DataTable GetColumn(string tableName, string colName)
         {
             var tableData = new DataTable();
 
@@ -290,7 +302,7 @@ namespace Debuging_Test_Console.Session
             }
 
         }
-        public DataTable GetColumn(string tableName, string colName, string whereVal)
+        static public DataTable GetColumn(string tableName, string colName, string whereVal)
         {
             var tableData = new DataTable();
 
@@ -345,10 +357,15 @@ namespace Debuging_Test_Console.Session
                     cmd.Parameters.Add("?LAST_NAME", MySqlDbType.Text).Value = lastName;
                     cmd.Parameters.Add("?EMAIL", MySqlDbType.Text).Value = email;
 
+            * Alternatively, it the  SQL Query to be sent does not need to be rebuilt like this often,
+            * simply store it as a string.
+            * 
+            *       cmd.CommandText+"INSERT INTO Customer(" +id + firstName + lastName + email+ ")";
+
             returns a boolean, of True if the command is successful (ie, returns more than 0 rows), or false
             if the command is not successful (returns 0 rows)
          */
-        public bool SendQry(MySqlCommand cmd)
+        static public bool SendQry(MySqlCommand cmd)
         {
 
             using (var cnn = new MySqlConnection(cnnStr.ConnectionString))

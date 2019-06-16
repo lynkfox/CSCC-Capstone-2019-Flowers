@@ -1,0 +1,9 @@
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\bin\Debug\FlowersIntranet.exe.config
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\bin\Debug\FlowersIntranet.exe
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\bin\Debug\FlowersIntranet.pdb
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.csprojAssemblyReference.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.Properties.Resources.resources
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.csproj.GenerateResource.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.csproj.CoreCompileInputs.cache
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.exe
+C:\Users\lynkf\source\repos\Capstone\CapstoneGit\Full Solution\Capstone Flowers Intranet App\FlowersIntranet\obj\Debug\FlowersIntranet.pdb

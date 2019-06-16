@@ -9,13 +9,19 @@ namespace Debuging_Test_Console
     {
         static void Main(string[] args)
         {
-            var session = new CcnSession();
+            
             var data = new DataTable();
 
-            if (session.isManager == true)
-            {
+            CcnSession.Setup("lmoore");
 
-            };
+            if (CcnSession.IsManager == true)
+            {
+                Console.WriteLine("Totes Manager");
+            } else
+            {
+                Console.WriteLine("Access Denied dude!");
+            }
+            Console.ReadLine();
 
             /*
             Console.WriteLine("The Current Username is: {0} and true/false - manager is: {1}.", session.username, session.isManager);
