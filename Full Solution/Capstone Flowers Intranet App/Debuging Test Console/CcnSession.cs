@@ -18,16 +18,36 @@ using System.Text;
 using System.Data;
 using MySql.Data.MySqlClient;
 
-namespace Debuging_Test_Console.Session
+namespace Debuging_Test_Console
 {
     static class CcnSession
     {
         //public properties
+
+        // Consider changing IsManager to an int? For more than just 2 levels of permission? Future proofing.
         static public bool IsManager { get; set; }
-        static private string Username { get; set;  }
+        static private string Username { get; set; }
 
 
-       
+
+        /* Initializes the username and the permission level for the current login session.
+         * 
+         * takes parameters of the username and the password
+         * 
+         * checks to make sure the password is correct.
+         * 
+         * this should be called immediately after login.
+         */
+
+        static public void Setup(string user)
+        {
+            Username = user;
+            Permission();
+
+        }
+
+
+
         /* This connection is currently hardcoded in.
          * 
          * TO DO - move connection to an external file to be read in
@@ -42,33 +62,72 @@ namespace Debuging_Test_Console.Session
 
         };
 
-        /* Initializes the username and the permission level for the current login session.
+        /* Checks the password against the database, and returns true if valid, false if not.
          * 
-         * this should be called immediately after login.
+         * to do - add exception handling.
          */
-
-        static public void Setup(string user)
+        public static bool ChkPassword(string pw)
         {
-            Username = user;
-            IsManager = Permission();
+            string sql = "SELECT password FROM EMPLOYEE WHERE username = '" + Username + "';";
+            MySqlDataReader rdr = null;
+
+
+            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            {
+                try
+                {
+                    cnn.Open();
+                    var cmd = new MySqlCommand(sql, cnn);
+                    rdr = cmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine("Checking Data. Username: " + Username + " | Password: "+rdr.GetString(0));
+
+
+                        if (rdr.GetString(0) == pw)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+
+                    }
+
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    // consider replacing with window.
+                    Console.WriteLine("Error: {0}", ex.Message);
+
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
+                }
+                return false;
+
+            }
 
         }
-
 
 
 
         /* This function can be used to determine if the current employee has permission to access
          * whatever it is being asked of. 
          * 
-         * Returns True if a manager, false if not.
+         * checks the password
          * 
-         * Delibertly private - It would undoubtedly be better to make isManager flag private
-         * and to use this function to return a bool externally, at this time we're leaving it as is 
-         * in order to streamline a few external processes. 
+         * checks for if the user has the Manager access level, and sets appropriately.
+         * 
+         * 
          * 
          * This may change in the future.
          */
-        static private bool Permission()
+        static private void Permission()
         {
 
             string sql = "SELECT type FROM EMPLOYEE WHERE username = '" + Username + "';";
@@ -77,33 +136,51 @@ namespace Debuging_Test_Console.Session
 
             using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
             {
-                cnn.Open();
-                var cmd = new MySqlCommand(sql, cnn);
-                rdr = cmd.ExecuteReader();
-
-                while (rdr.Read())
+                try
                 {
-                    Console.WriteLine("Checking Data. Username: " + Username + " | AcctType: " + rdr.GetString(i));
-                    i++;
-                    // this bit is just in case the command somehow draws back more than one username of the same name. 
-                    // the username col in this table is set to unique, so this shouldn't happen. 
-                    // unless - where the username is similar like: abcd and abcde - 
-                    // check into this!!!!
-                    if (rdr.GetString(0) == "Manager")
-                    {
+                    cnn.Open();
+                    var cmd = new MySqlCommand(sql, cnn);
+                    rdr = cmd.ExecuteReader();
 
-                        return true;
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine("Checking Data. Username: " + Username + " | AcctType: " + rdr.GetString(i));
+                        i++;
+                        // this bit is just in case the command somehow draws back more than one username of the same name. 
+                        // the username col in this table is set to unique, so this shouldn't happen. 
+                        // unless - where the username is similar like: abcd and abcde - 
+                        // check into this!!!!
+
+
+                        if (rdr.GetString(0) == "Manager")
+                        {
+
+                            IsManager = true;
+
+                        }
+                        else
+                        {
+                            IsManager = false;
+                        }
+
+
 
                     }
-                    else
-                    {
-                        return false;
-                    }
+
+                    // put in an exception for if rdr.count >1?
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: {0}", ex.Message);
+
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
                 }
 
-                // put in an exception for if rdr.count >1?
 
-                return false;
+
             }
 
 
@@ -143,7 +220,7 @@ namespace Debuging_Test_Console.Session
                     Console.WriteLine("Connection:  {0}", cnn.State);
                     Console.WriteLine("Sending Command: {0}", sql);
 
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd)) 
+                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
                     {
                         data.Fill(tableData);
                     }
@@ -312,7 +389,7 @@ namespace Debuging_Test_Console.Session
 
                 try
                 {
-                    string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + colName + "=" + whereVal + ";";
+                    string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + colName + "= '" + whereVal + "' ;";
 
                     //logging
                     Console.WriteLine("Connecting... ");
@@ -326,9 +403,56 @@ namespace Debuging_Test_Console.Session
                     using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
                     {
                         data.Fill(tableData);
+
                     }
 
                     return tableData;
+
+                }
+                catch (Exception ex)
+                {
+                    //mostly for debugging at this point.
+                    Console.WriteLine("Error: {0}", ex.Message);
+                    return null;
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
+                }
+
+            }
+
+        }
+
+        static public DataTable GetColumn(string tableName, string colName, string whereCol, string whereVal)
+        {
+            var tableData = new DataTable();
+
+
+            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            {
+
+                try
+                {
+                    string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + whereCol + "= '" + whereVal + "' ;";
+
+                    //logging
+                    Console.WriteLine("Connecting... ");
+
+                    var cmd = new MySqlCommand(sql, cnn);
+                    cnn.Open();
+                    //logging
+                    Console.WriteLine("Connection:  {0}", cnn.State);
+                    Console.WriteLine("Sending Command: {0}", sql);
+
+                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
+                    {
+                        data.Fill(tableData);
+
+                    }
+
+                    return tableData;
+
                 }
                 catch (Exception ex)
                 {
@@ -390,7 +514,8 @@ namespace Debuging_Test_Console.Session
                     if (cmd.ExecuteNonQuery() >= 1)
                     {
                         return true;
-                    } else
+                    }
+                    else
                     {
                         return false;
                     }

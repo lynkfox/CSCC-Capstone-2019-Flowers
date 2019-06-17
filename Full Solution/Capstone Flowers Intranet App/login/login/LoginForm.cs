@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 
+
 namespace login
 {
     public partial class LoginForm : Form
@@ -38,6 +39,11 @@ namespace login
 
         private void buttonLogin_Click(object sender, EventArgs e)
         {
+            /* - First itration of code. Kept for comparison purposes.
+             * 
+             * Programed by Salem
+             * 
+             * 
             DB db = new DB();
 
             String username = textBoxUsername.Text;
@@ -55,8 +61,7 @@ namespace login
             adapter.SelectCommand = command;
 
             adapter.Fill(table);
-
-            // check if the user exists or not
+             // check if the user exists or not
             if (table.Rows.Count > 0)
             {
                 this.Hide();
@@ -78,9 +83,69 @@ namespace login
                     MessageBox.Show("Wrong Username Or Password", "Wrong Data", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+            */
+
+            String username = textBoxUsername.Text;
+            String password = textBoxPassword.Text;
+
+            //Set up the username and the Permission level for if Employee or Manager.
+            CcnSession.Setup(username, password);
+
+            var dTable = new DataTable();
+
+            //Call to database to verify the username.
+            // username field is unique
+
+            dTable = CcnSession.GetColumn("EMPLOYEE", "username", username);
+
+
+
+            // check to see of the username exists.
+            if (dTable == null || dTable.Rows.Count == 0 )
+            {
+                if (username.Trim().Equals(""))
+                {
+                    MessageBox.Show("Enter Your Username To Login", "Empty Username", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else if (password.Trim().Equals(""))
+                {
+                    MessageBox.Show("Enter Your Password To Login", "Empty Password", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    MessageBox.Show("Our Records do not match this data. Please try again.", "Wrong Data", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                
+            } else if (dTable.Rows.Count == 1)
+            {
+                //verify the password
+                if (CcnSession.PwCorrect)
+                {
+                    this.Hide();
+                    MainForm mainform = new MainForm();
+                    mainform.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Our Records do not match this data. Please Try again.", "Wrong Data", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            
+            } else //if dTable.Rows.Count >1
+            {
+                /* this should never happen - username being unique, and the sql library searches
+                 * for exact  strings, not partial matches, this is an edge case error that is here
+                 * just in case
+                 */
+                MessageBox.Show("Something went wrong. Please contact IT.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+           
+            
+
+           
 
         }
-
+        
         private void labelGoToSignUp_Click(object sender, EventArgs e)
         {
             this.Hide();
