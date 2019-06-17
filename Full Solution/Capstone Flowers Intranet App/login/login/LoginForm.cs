@@ -89,6 +89,7 @@ namespace login
             String password = textBoxPassword.Text;
 
             //Set up the username and the Permission level for if Employee or Manager.
+            // Only needs to be done THIS ONE TIME - doesn't need to be done again.
             CcnSession.Setup(username, password);
 
             var dTable = new DataTable();

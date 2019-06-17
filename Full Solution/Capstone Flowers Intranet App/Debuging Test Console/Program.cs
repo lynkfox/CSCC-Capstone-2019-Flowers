@@ -9,10 +9,93 @@ namespace Debuging_Test_Console
         static void Main(string[] args)
         {
 
+            /*--- This code is for testing the new user creation screen.
+             * 
+             * god - damn.t     again.  ... bad sql command. i'm getting sick of myself
+             * 
+             */
+            /*
+            string fName = "Anthony";
+            string lName = "Goh";
+            string password = "test1";
+            string store = "1000-Col";
+
+
+            // outputs the date in format equal to the rest of the table
+            var today = DateTime.Today.ToString("yyyy-MM-dd");
+            string username = fName[0] + lName;
+            int i = 1;
+
+            while (checkUsername(username))
+            {
+
+                /* if there happen to be 2 people with the same first initial/last name combo
+                 * then this section will add a number to the end of the username.
+                 
+
+                if (i > 1 && i < 10)
+                {
+                    /* if there happen to be more than 2 people with the same first initial, last name
+                     * then we remove the 1 (the last char fo the string) and add the new incrimimented i
+                     * to the username (so username2, then username3, ect)
+                     
+                    username = username.Substring(0, username.Length - 1);
+                }
+                else if (i >= 10)
+                {
+                    /* Let's be real here. If there are more than 10 people with the exact same first
+                     * initial and last name, there there is either nepotism or something very weird going on
+                     * but just in case, we're removing 2 numbers if it gets above 10 for i.
+                     * 
+                     * we're not going to check for 3 numbers. Something is messed up, contact IT
+                     
+                    username = username.Substring(0, username.Length - 2);
+                }
+                username += i; // add the iteration number (starting at 1!!!) to the end of the preset username.
+                i++;
+            }
+
+            //Set up the SQL insertion string.
+
+            string cmd = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + password + "','" + today + "','" + store + "')";
+
+            if (CcnSession.SendQry(new MySqlCommand(cmd)))
+            {
+                Console.WriteLine("User Added: Username: " + username + " | Date Hired: " + today);
+            }else
+            {
+                Console.WriteLine("Returned 0 Lines - User Not Added");
+            }
+
+
+                bool checkUsername(string un)
+            {
+
+                if (CcnSession.GetColumn("EMPLOYEE", "username", un).Rows.Count > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            */
+
+
+
+
+            //
+            //
+            //
+
+
+
             /* Testing password based login
              * 
-             * and found the error. The SQL query was bad.
-             */
+             * and found the error. The SQL query was bad. 
+             
 
             String username = "agoh";
             String password = "tsdfaer"; //bad password
@@ -50,7 +133,7 @@ namespace Debuging_Test_Console
                 /* this should never happen - username being unique, and the sql library searches
                  * for exact  strings, not partial matches, this is an edge case error that is here
                  * just in case
-                 */
+                 *//*
                 Console.WriteLine("Something Really Bad Happened.");
             }
 
@@ -61,6 +144,16 @@ namespace Debuging_Test_Console
 
             Console.WriteLine("IsManager?: " + CcnSession.IsManager + " | ");
             
+            /*
+
+
+
+
+            //
+            //
+            //
+
+
 
 
 
@@ -80,6 +173,16 @@ namespace Debuging_Test_Console
             }
             Console.ReadLine();
             */
+
+
+
+
+
+            //
+            //
+            //
+
+
 
             /*  Original testing to make sure the connection worked.
              *  
@@ -106,6 +209,15 @@ namespace Debuging_Test_Console
 
 
 
+
+            //
+            //
+            //
+
+
+
+
+
             /* testing the SendQry method by adding new rows to the tale INVENTORY that we had forgoten when creating the initial
              * schema
              * 
@@ -116,5 +228,10 @@ namespace Debuging_Test_Console
             */
 
         }
+
+        
     }
+
+
+
 }

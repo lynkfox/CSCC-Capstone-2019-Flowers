@@ -63,45 +63,7 @@ namespace login
                 }
             }
 
-            private void textBoxEmail_Enter(object sender, EventArgs e)
-            {
-                String email = textBoxEmail.Text;
-                if (email.ToLower().Trim().Equals("email address"))
-                {
-                    textBoxEmail.Text = "";
-                    textBoxEmail.ForeColor = Color.Black;
-                }
-            }
-
-            private void textBoxEmail_Leave(object sender, EventArgs e)
-            {
-                String email = textBoxEmail.Text;
-                if (email.ToLower().Trim().Equals("email address") || email.Trim().Equals(""))
-                {
-                    textBoxEmail.Text = "email address";
-                    textBoxEmail.ForeColor = Color.Gray;
-                }
-            }
-
-            private void textBoxUsername_Enter(object sender, EventArgs e)
-            {
-                String username = textBoxUsername.Text;
-                if (username.ToLower().Trim().Equals("username"))
-                {
-                    textBoxUsername.Text = "";
-                    textBoxUsername.ForeColor = Color.Black;
-                }
-            }
-
-            private void textBoxUsername_Leave(object sender, EventArgs e)
-            {
-                String username = textBoxUsername.Text;
-                if (username.ToLower().Trim().Equals("username") || username.Trim().Equals(""))
-                {
-                    textBoxUsername.Text = "username";
-                    textBoxUsername.ForeColor = Color.Gray;
-                }
-            }
+          
 
             private void textBoxPassword_Enter(object sender, EventArgs e)
             {
@@ -166,10 +128,97 @@ namespace login
                 labelClose.ForeColor = Color.White;
             }
 
-            private void buttonCreateAccount_Click(object sender, EventArgs e)
-            {
-                // add a new user
+        private void buttonCreateAccount_Click(object sender, EventArgs e)
+        {
+            // add a new user
 
+            string fName = textBoxFirstname.Text;
+            string lName = textBoxLastname.Text;
+            string password = textBoxPassword.Text;
+            string store = list_store.Text;
+
+
+            // outputs the date in format equal to the rest of the table
+            var today = DateTime.Today.ToString("yyyy-MM-dd");
+
+            // automatically create the username as first initial, last name - all lowercase
+            string username = fName[0] + lName;
+            username = username.ToLower();
+
+
+
+            /* if there happen to be 2 people with the same first initial/last name combo
+             * then this section will add a number to the end of the username.
+             */
+
+            int i = 1;
+
+            while(checkUsername(username))
+            {
+
+                
+
+                if (i>1 && i<10)
+                {
+                    /* if there happen to be more than 2 people with the same first initial, last name
+                     * then we remove the 1 (the last char fo the string) and add the new incrimimented i
+                     * to the username (so username2, then username3, ect)
+                     */
+                    username = username.Substring(0, username.Length - 1);
+                } else if (i>=10)
+                {
+                    /* Let's be real here. If there are more than 10 people with the exact same first
+                     * initial and last name, there there is either nepotism or something very weird going on
+                     * but just in case, we're removing 2 numbers if it gets above 10 for i.
+                     * 
+                     * we're not going to check for 3 numbers. Something is messed up, contact IT
+                     */
+                    username = username.Substring(0, username.Length - 2);
+                }
+                username += i; // add the iteration number (starting at 1!!!) to the end of the preset username.
+                i++;
+            }
+
+            //Set up the SQL insertion string.
+
+            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + password + "','" + today + "','" + store+"')";
+
+            
+
+            //Check if Default Values are left in any of the boxes
+            if (!checkTextBoxesValues())
+            {
+                //check if password and confirm pw match
+                // check if the password equal the confirm password
+                if (textBoxPassword.Text.Equals(textBoxPasswordConfirm.Text))
+                {
+                    //make sure the command returns true (ie: at least 1 row was affected)
+                    if(CcnSession.SendQry(new MySqlCommand(sql)))
+                    {
+                        MessageBox.Show("Your Account Has Been Created. Your username is " +username+ ". Please remember this for your records.", "Account Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        //Return to the Login Screen
+                        this.Hide();
+                        LoginForm loginform = new LoginForm();
+                        loginform.Show();
+                    }else
+                    {
+                        MessageBox.Show("Unable to make a connection at this time. Please try again later.", "General Fault", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                    }
+
+                    
+                } else
+                {
+                    MessageBox.Show("Wrong Confirmation Password", "Password Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                }
+
+            } else
+            {
+                MessageBox.Show("Enter Your Informations First", "Empty Data", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+            }
+
+
+            /* original code, left for archive purposes
                 DB db = new DB();
                 MySqlCommand command = new MySqlCommand("INSERT INTO `Login_SignUP`(`firstname`, `lastname`, `emailaddress`, `username`, `password`) VALUES (@fn, @ln, @email, @usn, @pass)", db.getConnection());
 
@@ -222,12 +271,28 @@ namespace login
                 // close the connection
                 db.closeConnection();
 
+            */
+
+
+
+
+
             }
 
 
             // check if the username already exists
-            public Boolean checkUsername()
+            public bool checkUsername(string username)
+        {
+
+            if (CcnSession.GetColumn("EMPLOYEE", "username", username).Rows.Count > 0)
             {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            /* original code, kept for archive purposes
                 DB db = new DB();
 
                 String username = textBoxUsername.Text;
@@ -253,20 +318,22 @@ namespace login
                 {
                     return false;
                 }
+                */
 
-            }
+
+
+        }
 
             // check if the textboxes contains the default values
             public Boolean checkTextBoxesValues()
             {
                 String fname = textBoxFirstname.Text;
                 String lname = textBoxLastname.Text;
-                String email = textBoxEmail.Text;
-                String uname = textBoxUsername.Text;
                 String pass = textBoxPassword.Text;
+            String store = list_store.Text;
 
                 if (fname.Equals("first name") || lname.Equals("last name") ||
-                    email.Equals("email address") || uname.Equals("username")
+                    store.Equals("0000 - Please Select a Store")
                     || pass.Equals("password"))
                 {
                     return true;
