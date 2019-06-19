@@ -46,11 +46,7 @@ namespace Session
          */
         private MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
         {
-            Server = "cscc-capstone-flowers.czo7kmlutdp9.us-east-2.rds.amazonaws.com",
-            Database = "cscc-capstone-flowers",
-            UserID = "flowersAdmin",
-            Password = "SolFlowerGreenWater2",
-            Port = 3306
+
 
         };
 
