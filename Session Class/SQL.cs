@@ -154,7 +154,7 @@ namespace CcnSession
          * 
          * This may change in the future.
          */
-        public static void Permission()
+        private static void Permission()
         {
 
             string sql = "SELECT type FROM EMPLOYEE WHERE username = '" + Username + "';";
@@ -278,7 +278,7 @@ namespace CcnSession
 
             //setup the sql string for insertion
 
-            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, salt, hired) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "')";
+            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, salt, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "', '"+DefaultStore+"')";
 
             if (SendQry(new MySqlCommand(sql)))
             {
@@ -311,7 +311,7 @@ namespace CcnSession
         private static string GetStore()
         {
             var data = new DataTable();
-            data = GetColumn("EMPLOYEE", "locaton", "username", Username);
+            data = GetColumn("EMPLOYEE", "location", "username", Username);
 
             string store = data.Rows[0]["location"].ToString();
             return store;
