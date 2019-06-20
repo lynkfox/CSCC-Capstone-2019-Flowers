@@ -13,12 +13,12 @@
 
 
 
- /* TO DO LIST
-  * 
-  * Exceptions instead of Booleans. Throw a custom exception
-  * 
-  * More Detailed sql methods? (ie: GetInventory(Store)?
-  */
+/* TO DO LIST
+ * 
+ * Exceptions instead of Booleans. Throw a custom exception
+ * 
+ * More Detailed sql methods? (ie: GetInventory(Store)?
+ */
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using CcnSession.Properties;
 
 namespace CcnSession
 {
@@ -40,9 +41,14 @@ namespace CcnSession
         static public string DefaultStore { get; set; }
 
 
-
         static private string Username { get; set; }
 
+        static private string address, database, userid, password;
+
+        private static MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
+        {
+
+        };
 
 
         /* Initializes session.
@@ -65,6 +71,8 @@ namespace CcnSession
 
         static public void Setup(string user, string password)
         {
+            SetupConnection();
+
             Username = user;
 
             PwCorrect = ChkPassword(password);
@@ -72,7 +80,7 @@ namespace CcnSession
             DefaultStore = GetStore();
 
 
-            if(PwCorrect)
+            if (PwCorrect)
             {
                 Permission();
             }
@@ -98,16 +106,39 @@ namespace CcnSession
         }
 
 
-        /* This connection is currently hardcoded in.
+        /* This function reads in the connection data from the file in the resources and adds its information to the 
+         * properties needed for the connection builder.
          * 
-         * TO DO - move connection to an external file to be read in
+         * to do: encrypt and decrypt the file for additional protection
          */
-        private static MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
+
+        static private void SetupConnection()
         {
 
-		// add your own SQL connection data.
+            string[] rows = Resources.connection.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
-        };
+
+            address = rows[0];
+            database = rows[1];
+            userid = rows[2];
+            password = rows[3];
+
+            MySqlConnectionStringBuilder cnn = new MySqlConnectionStringBuilder
+            {
+
+                Server = address,
+                Database = database,
+                UserID = userid,
+                Password = password,
+                Port = 3306
+
+            };
+
+            cnnStr = cnn;
+        }
+
+
+        
 
         /* Checks the password against the database, and returns true if valid, false if not.
          * 
@@ -229,7 +260,7 @@ namespace CcnSession
 
         public static string CreateUser(string fName, string lName, string pw)
         {
-           
+
             // outputs the date in format equal to the rest of the table
             var today = DateTime.Today.ToString("yyyy-MM-dd");
 
@@ -278,7 +309,7 @@ namespace CcnSession
 
             //setup the sql string for insertion
 
-            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, salt, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "', '"+DefaultStore+"')";
+            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, salt, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "', '" + DefaultStore + "')";
 
             if (SendQry(new MySqlCommand(sql)))
             {
@@ -288,7 +319,7 @@ namespace CcnSession
             {
                 return null;
             }
-            
+
         }
 
 
@@ -339,12 +370,12 @@ namespace CcnSession
             //if the PWs are the same, then we don't want to change it!
 
             // really needs exception handling here.
-            if(ChkPassword(newPW))
+            if (ChkPassword(newPW))
             { return false; }
-           
 
 
-            string sql = "UPDATE EMPLOYEE SET password = '"+hashString+ "', salt = '"+saltString+"' WHERE username = '"+Username+"';";
+
+            string sql = "UPDATE EMPLOYEE SET password = '" + hashString + "', salt = '" + saltString + "' WHERE username = '" + Username + "';";
 
             if (SendQry(new MySqlCommand(sql)))
             {
@@ -356,7 +387,7 @@ namespace CcnSession
             }
 
 
-            
+
         }
 
 
@@ -364,23 +395,23 @@ namespace CcnSession
 
 
 
-            /* Generic SQL functions to Follow
-             */
+        /* Generic SQL functions to Follow
+         */
 
 
-            /* This function is designed to get any table from the connection.
-             * 
-             * Overloaded version can order the table by a custom ORDER BY
-             * 
-             * Overloaded version can be ordered by, where col = value
-             * 
-             * Both functions return NULL data if they catch an exception, and log it to the console
-             * 
-             * in live, check for Null when using these functions, if return null then throw an error.
-             * 
-             * does where val does not currently work with BETWEEN
-             */
-            static public DataTable GetTable(string tableName)
+        /* This function is designed to get any table from the connection.
+         * 
+         * Overloaded version can order the table by a custom ORDER BY
+         * 
+         * Overloaded version can be ordered by, where col = value
+         * 
+         * Both functions return NULL data if they catch an exception, and log it to the console
+         * 
+         * in live, check for Null when using these functions, if return null then throw an error.
+         * 
+         * does where val does not currently work with BETWEEN
+         */
+        static public DataTable GetTable(string tableName)
         {
             var tableData = new DataTable();
 

@@ -1,0 +1,14 @@
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\CcnSession.dll
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\CcnSession.pdb
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\BouncyCastle.Crypto.dll
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\Google.Protobuf.dll
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\MySql.Data.dll
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\Google.Protobuf.xml
+C:\Users\lynkf\source\repos\Capstone\CcnSession\bin\Release\MySql.Data.xml
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.csprojAssemblyReference.cache
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.csproj.CoreCompileInputs.cache
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.csproj.CopyComplete
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.dll
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.pdb
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.Properties.Resources.resources
+C:\Users\lynkf\source\repos\Capstone\CcnSession\obj\Release\CcnSession.csproj.GenerateResource.cache
