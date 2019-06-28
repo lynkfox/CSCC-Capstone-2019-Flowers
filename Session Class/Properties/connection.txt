@@ -1,4 +1,0 @@
-﻿server address
-database name
-userid
-password

@@ -5,9 +5,17 @@
  * each function that can retrieve or send data to the mySQL database deals with the connection internally
  * it opens and closes it to make sure there are no extra open connections floating around
  * 
+ * a note on exceptions. 
+ * 
+ * Due to the limited time in the summer semester for putting together a project of this magnitude, I have
+ * elected to go with a cheap and dirty exception method: just continue to throw the ex upward.
+ * 
+ * in the main program I handle catches with message boxes to display what went wrong. No, it is not ideal, 
+ * and no it is not necessarily the best practice, but it works and gets the job done, plus
+ * when I break something in the RDS I can see the message easier than having to make a console testbed for it.
  * 
  * Designed by: Anthony Goh (lynkfox on GitHub)
- * For: Columbus State Community College, CSCI-2999 capstone, 2019.
+ * For: Columbus State Community College, CSCI-2999 capstone, su2019.
  */
 
 
@@ -15,9 +23,9 @@
 
 /* TO DO LIST
  * 
- * Exceptions instead of Booleans. Throw a custom exception
+ * More Detailed Exceptions (custom?)
  * 
- * More Detailed sql methods? (ie: GetInventory(Store)?
+ * perhaps change some bool functions to throw custom message if false.
  */
 
 using System;
@@ -39,19 +47,30 @@ namespace CcnSession
         static public bool IsManager { get; set; }
         static public bool PwCorrect { get; set; }
         static public string DefaultStore { get; set; }
+        public static string Username { get; set; }
+        public static bool CurEmp { get; set; }
 
 
-        static private string Username { get; set; }
+        //Private properties, variables
 
-        static private string address, database, userid, password;
+        // these remain private, as they are not really needed outside of the class
+
+        private static string address, database, userid, password;
 
         private static MySqlConnectionStringBuilder cnnStr = new MySqlConnectionStringBuilder
         {
-
+           
         };
 
+        /* Public Functions */
 
-        /* Initializes session.
+        /* Housekeeping Functions
+         * 
+         * these functions are setup and cleanup of the static object
+         */
+        /* SQL.Setup(username, password) - No Overloads
+         * 
+         * Initializes session.
          * 
          * takes parameters of the username and the password
          * 
@@ -71,26 +90,46 @@ namespace CcnSession
 
         static public void Setup(string user, string password)
         {
-            SetupConnection();
 
-            Username = user;
-
-            PwCorrect = ChkPassword(password);
-
-            DefaultStore = GetStore();
-
-
-            if (PwCorrect)
+            try
             {
-                Permission();
+                SetupConnection();
+                if(CheckUsername(user))
+                {
+                    Username = user;
+                } else
+                {
+                    throw new Exception("Those records do not match our database.");
+                }
+                
+                
+                
+
+
+                if (ChkPassword(password))
+                {
+                    PwCorrect = true;
+                    Permission();
+                    DefaultStore = GetStore();
+                }
+                else
+                {
+                    IsManager = false;
+                    CurEmp = false;
+                    PwCorrect = false;
+                    throw new Exception("Those records do not match our database.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                IsManager = false;
+                throw ex;
             }
+            
         }
 
-        /* Safety function. Cleans up the static class for logout (but not program exit). 
+        /* SQL.Cleanup() - No overloads.
+         * 
+         * Safety function. Cleans up the static class for logout (but not program exit). 
          * 
          * Needs to be called at every position that can log out. Setup **should** overwrite for a new user, but
          * its better to be safe and call this.
@@ -103,44 +142,17 @@ namespace CcnSession
             PwCorrect = false;
             IsManager = false;
             DefaultStore = null;
+            CurEmp = false;
         }
 
-
-        /* This function reads in the connection data from the file in the resources and adds its information to the 
-         * properties needed for the connection builder.
+        /* User (Employee Database) functions
          * 
-         * to do: encrypt and decrypt the file for additional protection
+         * these functions are for creating, and updating new user entries in the employee database
          */
 
-        static private void SetupConnection()
-        {
-
-            string[] rows = Resources.connection.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-
-
-            address = rows[0];
-            database = rows[1];
-            userid = rows[2];
-            password = rows[3];
-
-            MySqlConnectionStringBuilder cnn = new MySqlConnectionStringBuilder
-            {
-
-                Server = address,
-                Database = database,
-                UserID = userid,
-                Password = password,
-                Port = 3306
-
-            };
-
-            cnnStr = cnn;
-        }
-
-
-        
-
-        /* Checks the password against the database, and returns true if valid, false if not.
+        /* SQL.ChkPassword(password) - No Overloads
+         * 
+         * Checks the password against the database, and returns true if valid, false if not.
          * 
          * to do - add exception handling.
          * 
@@ -151,101 +163,37 @@ namespace CcnSession
         public static bool ChkPassword(string pw)
         {
 
-            byte[] salt;
-            string hash;
-            var saltData = new DataTable();
-            var hashData = new DataTable();
-            saltData = GetColumn("EMPLOYEE", "salt", "username", Username);
-            hashData = GetColumn("EMPLOYEE", "password", "username", Username);
-
-            salt = Convert.FromBase64String(saltData.Rows[0]["salt"].ToString());
-            hash = hashData.Rows[0]["password"].ToString();
-
-            if (hash == Convert.ToBase64String(PasswordHash.ComputeHash(pw, salt)))
+            try
             {
-                return true;
-            }
-            else
+                byte[] salt;
+                string hash;
+                var saltData = new DataTable();
+                var hashData = new DataTable();
+                saltData = GetColumn("employee", "salt", "username", Username);
+                hashData = GetColumn("employee", "password", "username", Username);
+
+                salt = Convert.FromBase64String(saltData.Rows[0]["salt"].ToString());
+                hash = hashData.Rows[0]["password"].ToString();
+
+                if (hash == Convert.ToBase64String(PasswordHash.ComputeHash(pw, salt)))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            } catch (Exception ex)
             {
-                return false;
+                throw ex;
             }
+            
 
         }
 
-
-
-        /* This function can be used to determine if the current employee has permission to access
-         * whatever it is being asked of. 
+        /* SQL.CreateUser(fname, lname, desiredPW) - no overloads
          * 
-         * checks the password
-         * 
-         * checks for if the user has the Manager access level, and sets appropriately.
-         * 
-         * 
-         * 
-         * This may change in the future.
-         */
-        private static void Permission()
-        {
-
-            string sql = "SELECT type FROM EMPLOYEE WHERE username = '" + Username + "';";
-            MySqlDataReader rdr = null;
-            int i = 0;
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
-            {
-                try
-                {
-                    cnn.Open();
-                    var cmd = new MySqlCommand(sql, cnn);
-                    rdr = cmd.ExecuteReader();
-
-                    while (rdr.Read())
-                    {
-                        Console.WriteLine("Checking Data. Username: " + Username + " | AcctType: " + rdr.GetString(i));
-                        i++;
-                        // this bit is just in case the command somehow draws back more than one username of the same name. 
-                        // the username col in this table is set to unique, so this shouldn't happen. 
-                        // unless - where the username is similar like: abcd and abcde - 
-                        // check into this!!!!
-
-
-                        if (rdr.GetString(0) == "Manager")
-                        {
-
-                            IsManager = true;
-
-                        }
-                        else
-                        {
-                            IsManager = false;
-                        }
-
-
-
-                    }
-
-                    // put in an exception for if rdr.count >1?
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error: {0}", ex.Message);
-
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
-
-
-            }
-
-
-        }
-
-
-        /* CreateUser takes the employees first and last name and desired pw.
+         * CreateUser takes the employees first and last name and desired pw.
          * 
          * will automatically generate a unique username (first initial, last name + numbers as needed)
          * 
@@ -262,7 +210,7 @@ namespace CcnSession
         {
 
             // outputs the date in format equal to the rest of the table
-            var today = DateTime.Today.ToString("yyyy-MM-dd");
+            var today = DateTime.Today.ToString("yyyy-MM-dd hh:mm tt");
 
             // automatically create the username as first initial, last name - all lowercase
             string username = fName[0] + lName;
@@ -309,46 +257,54 @@ namespace CcnSession
 
             //setup the sql string for insertion
 
-            string sql = "INSERT INTO EMPLOYEE (first_name, last_name, username, password, salt, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "', '" + DefaultStore + "')";
+            try
+            {
+                string sql = "INSERT INTO employee (first_name, last_name, username, password, salt, hired, location) VALUES ('" + fName + "','" + lName + "','" + username + "','" + hashString + "','" + saltString + "','" + today + "', '" + DefaultStore + "')";
 
-            if (SendQry(new MySqlCommand(sql)))
-            {
-                return username;
+                if (SendQry(new MySqlCommand(sql)))
+                {
+                    return username;
+                }
+                else
+                {
+                    return null;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return null;
+                throw ex;
             }
+            
 
         }
 
-
-
-        /* Private function for checking the username if it is unique or not
+        /* SQL.CheckUsername(username) - no overloads
+         * 
+         * returns bool if username exists (good for creating new user to prevent duplicate usernames and error in the
+         * sql insert or to make sure the username exists before calling the database for the passwordhash
          */
-        private static bool CheckUsername(string username)
+        public static bool CheckUsername(string username)
         {
-
-            if (GetColumn("EMPLOYEE", "username", username).Rows.Count > 0)
+            try
             {
-                return true;
-            }
-            else
+                if (GetColumn("employee", "username", username).Rows.Count > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            } catch (Exception ex)
             {
-                return false;
+                throw ex;
             }
+            
         }
 
-        private static string GetStore()
-        {
-            var data = new DataTable();
-            data = GetColumn("EMPLOYEE", "location", "username", Username);
-
-            string store = data.Rows[0]["location"].ToString();
-            return store;
-        }
-
-        /* Method for changing the pw in the database.
+        /* SQL.ChangePassword(newPW) - no overloads
+         * 
+         * Method for changing the pw in the database.
          * 
          * Pulls the username from the current session. Overloaded version takes a username as a second argument.
          * 
@@ -375,7 +331,7 @@ namespace CcnSession
 
 
 
-            string sql = "UPDATE EMPLOYEE SET password = '" + hashString + "', salt = '" + saltString + "' WHERE username = '" + Username + "';";
+            string sql = "UPDATE employee SET password = '" + hashString + "', salt = '" + saltString + "' WHERE username = '" + Username + "';";
 
             if (SendQry(new MySqlCommand(sql)))
             {
@@ -390,16 +346,846 @@ namespace CcnSession
 
         }
 
+        /* SQL.GetEmpNumber(username)
+         * 
+         * returns an employee number. 
+         * 
+         * important because for safety reasons (to prevent errors or miss data) we use the emp number for all
+         * update and modification functions. The empNum is the Primary Key in the database, unique, and so much
+         * less trouble than possibly mispelling usernames.
+         *
+         * 
+         */
+
+        public static int GetEmpNum(string user)
+        {
+            try
+            {
+                int.TryParse(GetColumn("employee", "emp_num", "username", user).Rows[0]["emp_num"].ToString(), out int empNum);
+
+                
+                if (empNum ==0)
+                {
+                    throw new Exception("No employee found.");
+                } else
+                {
+                    return empNum;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            
+        }
+
+        public static void UpdateFname(int empNum, string fname)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET first_name = '" + fname + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void UpdateLname(int empNum, string lname)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET last_name = '" + lname + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void UpdateStreet(int empNum, string street)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET street = '" + street + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void UpdateCity(int empNum, string city)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET city = '" + city + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void UpdateState(int empNum, string st)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET state = '" + st + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void UpdateZip(int empNum, int zip)
+        {
+           
+            try
+            {
+                string sql = "UPDATE employee SET zip = '" + zip + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void Promote(int empNum)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET type = 'Manager' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void Demote(int empNum)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET type = 'Employee' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void Changestore(int empNum, string store)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET location = '" + store + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void ChangePay(int empNum, double newPay)
+        {
+            
+            try
+            {
+                string sql = "UPDATE employee SET pay = '" + newPay + "' WHERE emp_num = '" + empNum + "';";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void Terminate(int empNum)
+        {
+            
+            
+            try
+            {
+                var today = DateTime.Today.ToString("yyyy-MM-dd hh:mm tt");
+                string sql = "UPDATE `employee` SET `type` = 'Terminated', `terminated` = '" + today + "' WHERE (`emp_num` = '" + empNum + "');";
+                SendQry(new MySqlCommand(sql));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static DataTable GetEmployee(int empNum)
+        {
+            
+            try
+            {
+                var data = GetTable("employee", "emp_num", empNum.ToString());
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /* Order Database Functions
+         * 
+         * these functions all have to do with retrieving and viewing orders
+         * 
+         */
+
+
+        /* SQL.GetOrders( ... several overloads)
+         * 
+         * at its basic returns orders for the default store of the user.
+         * 
+         * overloads can return for a different store, or for specific customers, or even specific orders
+         */
+
+        public static DataTable GetOrders()
+        {
+            try
+            {
+                string sql = "SELECT * FROM order_history WHERE location = '" + DefaultStore + "';";
+                return SelectQry(sql);
+            } catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
+        }
+
+        public static DataTable GetOrders(string store)
+        {
+            try
+            {
+                string sql = "SELECT * FROM order_history WHERE location = '" + store + "';";
+                return SelectQry(sql);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
+
+        }
+
+        public static DataTable GetOrders(string store, string email)
+        {
+            try
+            {
+                string acctNum = GetAcctNum(email).ToString();
+                string sql = "SELECT * FROM order_history WHERE location = '" + store + "' AND email = '"+acctNum+"';";
+                return SelectQry(sql);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
+
+        }
+
+        public static DataTable GetOrders(int custNum)
+        {
+
+            try
+            {
+                string sql = "SELECT * FROM order_history WHERE acct_num = '" + custNum + "';";
+                return SelectQry(sql);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
+        public static DataTable GetOrders(string store, int custNum)
+        {
+            try
+            {
+                string sql = "SELECT * FROM order_history WHERE location = '" + store + "' AND acct_num = '"+custNum+"';";
+                return SelectQry(sql);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
+        /*
+         * valid status:
+         * 
+         * Ordered, Recieved, Processed, Out for Delivery, Delivered, Canceled
+         * 
+         * Paid, Not Paid
+         */
+        public static void ChangeStatus(int orderNum, string status)
+        {
+
+        }
+
+        public static void ChangeDate(int orderNum, string date)
+        {
+
+        }
+
+        public static void ChangeDelAddy(int orderNum, string address)
+        {
+
+        }
+
+        public static void AddItem(int orderNum, int itemNum, int qty)
+        {
+
+        }
+
+        public static void AdjustQty(int orderNum, int itemNum, int qty)
+        {
+
+        }
+
+        public static int GetAcctNum(string email)
+        {
+            try
+            {
+                int.TryParse(GetColumn("customer", "acct_num", "email", email).Rows[0]["acct_num"].ToString(), out int acctNum);
+
+
+                if (acctNum == 0)
+                {
+                    throw new Exception("No employee found.");
+                }
+                else
+                {
+                    return acctNum;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int GetAcctNum(string fName, string lName)
+        {
+            try
+            {
+                string sql = "SELECT acct_num FROM customer WHERE first_name ='" + fName + "' AND last_name = '" + lName + "';";
+                int.TryParse(SelectQry(sql).Rows[0]["acct_num"].ToString(), out int acctNum);
+
+
+                if (acctNum == 0)
+                {
+                    throw new Exception("No employee found.");
+                }
+                else
+                {
+                    return acctNum;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+        /* Store Inventory Functions
+         * 
+         * these functions deal with the inventory database. 
+         * 
+         * they DO NOT deal with the item database - that stuff is NOT adjusted by the store app
+         * and at this point is to be dealt with by HQ when new items are brought to sale.
+         * 
+         */
+
+        /* SQL.GetInventory( ... several overloads)
+         * 
+         * at its basic returns orders for the default store of the user.
+         * 
+         * overloads can return for a different store, or for specific items
+         */
+        public static DataTable GetInventory()
+        {
+            try
+            {
+                return SelectQry("SELECT items.item, items.item_name, items.purchase_cost, items.sell_cost, items.category, store_inventory.qty FROM items  INNER JOIN store_inventory WHERE store_inventory.item_id = items.item_id AND location = '" + DefaultStore + "'; ");
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
+            
+
+
+           
+
+        }
+
+        public static DataTable GetInventory(string store)
+        {
+            try
+            {
+                return SelectQry("SELECT items.item, items.item_name, items.purchase_cost, items.sell_cost, items.category, store_inventory.qty FROM items  INNER JOIN store_inventory WHERE store_inventory.item_id = items.item_id AND location = '" + store + "'; ");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
+
+        }
+
+        public static DataTable GetInventory(string store, int itemNum)
+        {
+            try
+            {
+                
+                return SelectQry("SELECT items.item, items.item_name, items.purchase_cost, items.sell_cost, items.category, store_inventory.qty FROM items  INNER JOIN store_inventory WHERE store_inventory.item_id = items.item_id AND location = '" + store + "' AND items.item_id = '"+itemNum+"'; ");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+            
+
+        }
+
+        public static int GetItemId(string itemName)
+        {
+            try
+            {
+                var data = new DataTable();
+                string sql = "SELECT item_id FROM items WHERE item_name ='" + itemName + "';";
+                try
+                {
+                    data = SelectQry(sql);
+                }
+                catch 
+                {
+                    throw new Exception("No item found with that name");
+                }
+                int.TryParse(data.Rows[0]["item_id"].ToString(), out int item_id);
+
+                return item_id;
+            } catch(Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /* SQL.ChangeQty(itemNum, qty)
+         * 
+         * this updates the item qty at the store - positive or negative - and spits out an error message if the
+         * item is going to go negative.
+         * 
+         * autmatically uses the users default store. CANNOT MODIFY OTHER STORES INVENTORY
+         */
+        public static void ChangeQty(int itemNum, int qty)
+        {
+            string sql= "UPDATE store_inventory SET qty = '"+qty+"' WHERE item_id='"+itemNum+"' AND location = '"+DefaultStore+"';";
+           
+            try
+            {
+                if(SendQry(new MySqlCommand(sql)))
+                {
+                    Console.WriteLine("Command sent, Qty Updated.");
+                }
+            } catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
+        /* SQL.ItemChgStore(itemNum, store, amount)
+         * 
+         * moves an amount of item from default store to new store
+         * 
+         */
+
+        public static void ItemChgStore(int itemName, string store, int amt)
+        {
+
+        }
+
+
+
+        /* Accounting methods
+         * 
+         * these methods handle the Accts Rec, Accts Payable, and basic financial reporting tools for the
+         * default store. They ONLY affect the default store, and cannot be used to see other stores information
+         */
+
+        /*SQL.GetAcRec(... several overloads
+         * 
+         * this method retrieves the accounts recievables for the store, or a specific one, or a specific users)
+         */
+        public static DataTable GetAcRec()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        /* valid types are invoice and account
+         */
+        public static DataTable GetAcRec(int idNum, string type)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable GetAcRec(string startDate, string endDate)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static int AmtOwed(int invoiceNum)
+        {
+            int owed = 0;
+            return owed;
+        }
+
+        public static void AddPay(int invoiceNum, int pmt)
+        {
+
+        }
+
+        public static void NewAcRec(int acctNum, int orderNum, int owed)
+        {
+
+        }
+
+        public static DataTable AcctPay()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable AcctPay(int id)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable AcctPay(string vendor, int invoiceNum)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable AcctPay(string vendor)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable AcctPay(string startDate, string endDate)
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static int AcctPayOwed(int id)
+        {
+            int owed = 0;
+            return owed;
+        }
+
+        public static int AcctPayOwed(string vendor, int invoiceNum)
+        {
+            int owed = 0;
+            return owed;
+        }
+
+        public static void AcctPayPmt(string vendor, int invoiceNum, int pmt)
+        {
+
+        }
+
+        /* still Accounting Methods - but these are the Report Generation Methods
+         * 
+         * again - these all only deal with the current store of the logged in manager.
+         * 
+         * this information can be provided to corporate account department for corporate level reports
+         */
+
+        public static DataTable GeneralLedger()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable ProfitReport()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable LossReport()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static DataTable CashReport()
+        {
+            var data = new DataTable();
+
+
+            return data;
+
+        }
+
+        public static void RunReports()
+        {
+
+        }
+
+
+
+
+
+
+
+
+
+        /*Private Internal Functions */
+
+        /* GetStore() - no overloads - private - internal use Only
+         * 
+         * used to get the store of the logged in account.
+         */
+
+        private static string GetStore()
+        {
+            try
+            {
+                var data = new DataTable();
+                data = GetColumn("employee", "location", "username", Username);
+
+                string store = data.Rows[0]["location"].ToString();
+                return store;
+
+            } catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+        }
+        
+        /* SetupConnection() - Internal, Private, No Overloads
+         * 
+         * This function reads in the connection data from the file in the resources and adds its information to the 
+         * properties needed for the connection builder.
+         * 
+         * to do: encrypt and decrypt the file for additional protection
+         */
+
+        private static void SetupConnection()
+        {
+
+            string[] rows = Resources.connection.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+            /* I acknowledge this is a dirty way to do this. There is no error checking to make sure that the
+             * file is in the correct order, nor is it a deliniated list. This is fast and effective for the moment
+             * mostly being used as a current method until I figure out how to encrypt that plain text resource file :/
+             */
+            address = rows[0];
+            database = rows[1];
+            userid = rows[2];
+            password = rows[3];
+            
+
+            MySqlConnectionStringBuilder cnn = new MySqlConnectionStringBuilder
+            {
+
+                Server = address,
+                Database = database,
+                UserID = userid,
+                Password = password,
+                Port = 3306,
+                AllowZeroDateTime = true
+
+            };
+
+            cnnStr = cnn;
+        }
+
+        /* Permission() - No Overloads - Private - Internal use Only
+         * 
+         * This function can be used to determine if the current employee has permission to access
+         * whatever it is being asked of. 
+         * 
+         * checks the password
+         * 
+         * checks for if the user has the Manager access level, and sets appropriately.
+         * 
+         * 
+         * 
+         * This may change in the future.
+         */
+        private static void Permission()
+        {
+
+            string sql = "SELECT type FROM employee WHERE username = '" + Username + "';";
+            MySqlDataReader rdr = null;
+            int i = 0;
+
+            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            {
+                try
+                {
+                    cnn.Open();
+                    var cmd = new MySqlCommand(sql, cnn);
+                    rdr = cmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        Console.WriteLine("Checking Data. Username: " + Username + " | AcctType: " + rdr.GetString(i));
+                        i++;
+                        // this bit is just in case the command somehow draws back more than one username of the same name. 
+                        // the username col in this table is set to unique, so this shouldn't happen. 
+                        // unless - where the username is similar like: abcd and abcde - 
+                        // check into this!!!!
+
+
+                        if (rdr.GetString(0) == "Manager")
+                        {
+
+                            IsManager = true;
+                            CurEmp = true;
+
+                        } else if (rdr.GetString(0) == "Terminated")
+                        {
+                            CurEmp = false;
+                            IsManager = false;
+                        }
+                        else
+                        {
+                            IsManager = false;
+                            CurEmp = true;
+                        }
+                        
+
+
+
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: {0}", ex.Message);
+                    throw ex;
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
+                }
+
+
+
+            }
+
+
+        }
+
+        /* GetOrderItems(ordernum) - no overloads - private - internal use only
+         * 
+         * for retrieving the line items out of the order_items database.
+         * 
+         * only used in the GetOrder functions - no use for just the line items without the additional
+         * order information in the order_history database
+         * 
+         */
+
+        private static DataTable GetOrderItems(int orderNum)
+        {
+            var data = new DataTable();
+
+            return data;
+        }
 
 
 
 
 
         /* Generic SQL functions to Follow
+         * 
+         * The goal is to not use these functions outside of the class. Because these are some of the generic connection
+         * types were going to need over and over, then they are functions. 
+         * 
+         *
+         * 
+         * they are available for public use for edge cases however
          */
 
 
-        /* This function is designed to get any table from the connection.
+        /* SQL.GetTable(... Multiple overloads)
+         * 
+         * This function is designed to get any table from the connection.
          * 
          * Overloaded version can order the table by a custom ORDER BY
          * 
@@ -413,129 +1199,43 @@ namespace CcnSession
          */
         static public DataTable GetTable(string tableName)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT * FROM " + tableName;
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-                    }
-
-                    return tableData;
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT * FROM " + tableName;
+                return SelectQry(sql);
+            } catch (Exception ex)
+            {
+                throw ex;
             }
+            
+
 
         }
         static public DataTable GetTable(string tableName, string orderBy)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT * FROM " + tableName + "ORDER BY" + orderBy + ";";
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-                    }
-
-                    return tableData;
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT * FROM " + tableName + "ORDER BY" + orderBy + ";";
+                return SelectQry(sql);
             }
-
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
         }
-        static public DataTable GetTable(string tableName, string orderBy, string whCol, string whVal)
+        static public DataTable GetTable(string tableName, string whCol, string whVal)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT * FROM " + tableName + "ORDER BY" + orderBy + " WHERE " + whCol + "=" + whVal + ";";
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-                    }
-
-                    return tableData;
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT * FROM " + tableName + " WHERE " + whCol + "=" + whVal + ";";
+                return SelectQry(sql);
             }
-
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
         }
 
         /* same as GetTable, except takes the table name and the column name as arguments, and only returns
@@ -547,142 +1247,66 @@ namespace CcnSession
          * 
          * session.GetColumn(ACCT_REC, acct_num, "10003")
          * 
-         * does not currently work with BETWEEN query
+         * does not currently work with BETWEEN query (tho you could jury rig it with
+         * FROM table BETWEEN value=start, value=end; as one string in the tableName.
+         * 
+         * don't do this. just use sendqry instead.
          */
         static public DataTable GetColumn(string tableName, string colName)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT " + colName + " FROM " + tableName + ";";
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-                    }
-
-                    return tableData;
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT " + colName + " FROM " + tableName + ";";
+                return SelectQry(sql);
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
 
         }
         static public DataTable GetColumn(string tableName, string colName, string whereVal)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + colName + "= '" + whereVal + "' ;";
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-
-                    }
-
-                    return tableData;
-
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + colName + "= '" + whereVal + "' ;";
+                return SelectQry(sql);
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+
 
         }
 
         static public DataTable GetColumn(string tableName, string colName, string whereCol, string whereVal)
         {
-            var tableData = new DataTable();
-
-
-            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            try
             {
-
-                try
-                {
-                    string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + whereCol + "= '" + whereVal + "' ;";
-
-                    //logging
-                    Console.WriteLine("Connecting... ");
-
-                    var cmd = new MySqlCommand(sql, cnn);
-                    cnn.Open();
-                    //logging
-                    Console.WriteLine("Connection:  {0}", cnn.State);
-                    Console.WriteLine("Sending Command: {0}", sql);
-
-                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
-                    {
-                        data.Fill(tableData);
-
-                    }
-
-                    return tableData;
-
-                }
-                catch (Exception ex)
-                {
-                    //mostly for debugging at this point.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    return null;
-                }
-                finally
-                {
-                    if (cnn != null) cnn.Close();
-                }
-
+                string sql = "SELECT " + colName + " FROM " + tableName + " WHERE " + whereCol + "= '" + whereVal + "' ;";
+                return SelectQry(sql);
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
 
         }
 
-        /* For Executing non table getting queries (INSERT, ALTER)
+        /* SendQry(2 overloads)
          * 
+         * 
+         * For Executing non table getting queries (INSERT, ALTER, UPDATE)
+         * 
+         * takes a string, and puts it into a MySqlCommand 
+         * 
+         * or
+         *
          * takes a MySqlCommand - built with the MySqlCommand.CommandText functions
          * 
          * using something like:
@@ -737,7 +1361,54 @@ namespace CcnSession
                 {
                     //mostly for debugging at this point.
                     Console.WriteLine("Error: {0}", ex.Message);
-                    return false;
+                    throw ex;
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
+                }
+
+            }
+
+        }
+
+        static public bool SendQry(string sql)
+        {
+
+            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            {
+
+                try
+                {
+
+
+                    //logging
+                    Console.WriteLine("Connecting... ");
+
+                    // assigns the connection to the command, so when executeNonQry fires it knows what connection to use
+                    var cmd = new MySqlCommand(sql, cnn);
+                    cnn.Open();
+
+                    //logging
+                    Console.WriteLine("Connection:  {0}", cnn.State);
+                    Console.WriteLine("Sending Command: {0}", cmd);
+
+                    //Sends the command, as defined by the string builder externally.
+                    if (cmd.ExecuteNonQuery() >= 1)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    //mostly for debugging at this point.
+                    Console.WriteLine("Error: {0}", ex.Message);
+                    throw ex;
                 }
                 finally
                 {
@@ -749,7 +1420,54 @@ namespace CcnSession
         }
 
 
+        /* SelectQry(string), no overloads
+         * 
+         * this is the most basic function here, returns a datatable from a Select string.
+         * 
+         * all GetTable and GetColumn functions use it, they just build the string for you
+         * 
+         * this is public in case need something that doesn't fit in the GetTable, GetColumn overloads
+         */
 
+        static public DataTable SelectQry(string sql)
+        {
+            var tableData = new DataTable();
+            using (var cnn = new MySqlConnection(cnnStr.ConnectionString))
+            {
+
+                try
+                {
+                    
+
+                    //logging
+                    Console.WriteLine("Connecting... ");
+
+                    var cmd = new MySqlCommand(sql, cnn);
+                    cnn.Open();
+                    //logging
+                    Console.WriteLine("Connection:  {0}", cnn.State);
+                    Console.WriteLine("Sending Command: {0}", sql);
+
+                    using (MySqlDataAdapter data = new MySqlDataAdapter(cmd))
+                    {
+                        data.Fill(tableData);
+                    }
+
+                    return tableData;
+                }
+                catch (Exception ex)
+                {
+                    //mostly for debugging at this point.
+                    Console.WriteLine("Error: {0}", ex.Message);
+                    throw ex;
+                }
+                finally
+                {
+                    if (cnn != null) cnn.Close();
+                }
+
+            }
+        }
 
     }
 
